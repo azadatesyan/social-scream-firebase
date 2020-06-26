@@ -1,20 +1,14 @@
-const functions = require("firebase-functions");
-const admin = require("firebase-admin");
+const functions = require('firebase-functions');
+const admin = require('firebase-admin');
+const express = require('express');
+const app = express();
 
 admin.initializeApp();
 
-// // Create and Deploy Your First Cloud Functions
-// // https://firebase.google.com/docs/functions/write-firebase-functions
-//
-
-exports.helloWorld = functions.https.onRequest((request, response) => {
-	response.send("Hello from Firebase!");
-});
-
-exports.getScreams = functions.https.onRequest(async (req, res) => {
+app.get('/screams', (req, res) => {
 	try {
 		let screams = [];
-		let screamsQuery = await admin.firestore().collection("screams").get();
+		let screamsQuery = await admin.firestore().collection('screams').get();
 		screamsQuery.forEach((scream) => {
 			screams.push(scream.data());
 		});
@@ -23,3 +17,25 @@ exports.getScreams = functions.https.onRequest(async (req, res) => {
 		console.log(err);
 	}
 });
+
+app.post('/screams/new', (req, res) => {
+	try {
+		let screamToPush = {
+			body: req.body.content,
+			userID: 'olivgueg',
+			createdAt: Date.now()
+		};
+		let createdScream = await admin.firestore().collection('screams').add(screamToPush);
+		res.status(200).json({
+			message: `Scream ${createdScream.id} created successfully`
+		});
+	} catch (err) {
+		console.log(err);
+		res.status(500).json({
+			message: 'Something went wrong',
+			errorCode: err
+		});
+	}
+});
+
+exports.api = functions.https.onRequest(app);
