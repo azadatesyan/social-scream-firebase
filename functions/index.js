@@ -1,32 +1,13 @@
 const functions = require('firebase-functions');
-const admin = require('firebase-admin');
+const { admin, firebase, db } = require('./config');
 const app = require('express')();
-const firebase = require('firebase');
-const localCredentials = require('/home/olivier/Documents/socialape-6b91a-bde472c15d65.json');
-
-const firebaseConfig = {
-	apiKey: 'AIzaSyAC6Y--Yc_E_FzjdVFfFSwsbGLvfR3tJJ8',
-	authDomain: 'socialape-6b91a.firebaseapp.com',
-	databaseURL: 'https://socialape-6b91a.firebaseio.com',
-	projectId: 'socialape-6b91a',
-	storageBucket: 'socialape-6b91a.appspot.com',
-	messagingSenderId: '868359346037',
-	appId: '1:868359346037:web:cc911e8124cb895cbf253c',
-	measurementId: 'G-Z6Y66WDFBR'
-};
-
-admin.initializeApp({
-	credential: admin.credential.cert(localCredentials),
-	databaseURL: firebaseConfig.databaseURL
-});
-firebase.initializeApp(firebaseConfig);
-const db = admin.firestore();
+const { isEmpty, isEmail } = require('./validations');
 
 app.get('/screams', async (req, res) => {
 	try {
 		let screams = [];
 		let screamsQuery = await db.collection('screams').get();
-		screamsQuery.forEach(scream => {
+		screamsQuery.forEach((scream) => {
 			screams.push({
 				screamId: scream.id,
 				...scream.data()
@@ -63,7 +44,32 @@ app.post('/screams/new', async (req, res) => {
 });
 
 app.post('/signup', async (req, res) => {
-	const newUser = req.body;
+	let errors = {};
+	const newUser = {
+		username: req.body.username,
+		email: req.body.email,
+		password: req.body.password,
+		confirmPassword: req.body.confirmPassword
+	};
+
+	if (!isEmail(newUser.email)) errors.email = 'Email must be valid';
+
+	Object.keys(newUser).forEach((key) => {
+		console.log(`Currently checking ${key} and its value is: ${newUser[key]}`);
+		if (isEmpty(newUser[key])) {
+			errors = {
+				...errors,
+				[key]: `${key} must not be empty`
+			};
+		}
+	});
+
+	if (newUser.confirmPassword !== newUser.password) errors.confirmPassword = 'Passwords must match';
+
+	if (Object.keys(errors).length > 0) {
+		return res.status(400).json(errors);
+	}
+
 	const userExistsSnapshot = await db.collection('users').doc(newUser.username).get();
 	const userExists = userExistsSnapshot.exists;
 
@@ -97,6 +103,11 @@ app.post('/signup', async (req, res) => {
 			}
 		}
 	}
+});
+
+app.post('/login', async (req, res) => {
+	const userCredentials = await firebase.auth().signInWithEmailAndPassword(req.email, req.password);
+	const userToken = await userCredentials.user.getIdToken();
 });
 
 exports.api = functions.region('europe-west1').https.onRequest(app);
