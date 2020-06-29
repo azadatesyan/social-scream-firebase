@@ -1,4 +1,4 @@
-const localCredentials = require('./fbKeys.json'),
+const localCredentials = require('./FBkeys.json'),
 	admin = require('firebase-admin'),
 	firebase = require('firebase');
 
