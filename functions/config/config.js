@@ -15,11 +15,12 @@ const firebaseConfig = {
 
 admin.initializeApp({
 	credential: admin.credential.cert(localCredentials),
-	databaseURL: firebaseConfig.databaseURL
+	databaseURL: firebaseConfig.databaseURL,
+	storageBucket: firebaseConfig.storageBucket
 });
 
 firebase.initializeApp(firebaseConfig);
 
 const db = admin.firestore();
 
-module.exports = { admin, firebase, db };
+module.exports = { admin, firebase, db, firebaseConfig };

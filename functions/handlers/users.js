@@ -1,8 +1,11 @@
-const { isEmpty, isEmail } = require('../util/validations'),
-	{ admin, firebase, db } = require('../config/config');
+const { validateSignupData, validateLoginData } = require('../util/validations'),
+	{ admin, firebase, db, firebaseConfig } = require('../config/config'),
+	BusBoy = require('busboy'),
+	path = require('path'),
+	os = require('os'),
+	fs = require('fs');
 
 const signup = async (req, res) => {
-	let errors = {};
 	const newUser = {
 		username: req.body.username,
 		email: req.body.email,
@@ -10,23 +13,10 @@ const signup = async (req, res) => {
 		confirmPassword: req.body.confirmPassword
 	};
 
-	if (!isEmail(newUser.email)) errors.email = 'Email must be valid';
+	const defaultProfilePicture = `https://firebasestorage.googleapis.com/v0/b/${firebaseConfig.storageBucket}/o/no-face.png?alt=media`;
 
-	Object.keys(newUser).forEach((key) => {
-		console.log(`Currently checking ${key} and its value is: ${newUser[key]}`);
-		if (isEmpty(newUser[key])) {
-			errors = {
-				...errors,
-				[key]: `${key} must not be empty`
-			};
-		}
-	});
-
-	if (newUser.confirmPassword !== newUser.password) errors.confirmPassword = 'Passwords must match';
-
-	if (Object.keys(errors).length > 0) {
-		return res.status(400).json(errors);
-	}
+	const { valid, errors } = validateSignupData(newUser);
+	if (!valid) return res.status(400).json(errors);
 
 	const userExistsSnapshot = await db.collection('users').doc(newUser.username).get();
 	const userExists = userExistsSnapshot.exists;
@@ -44,6 +34,7 @@ const signup = async (req, res) => {
 			const createdUser = {
 				email: newUser.email,
 				username: newUser.username,
+				profilePicture: defaultProfilePicture,
 				userId: signupResponse.user.uid,
 				createdAt: admin.firestore.Timestamp.fromDate(new Date())
 			};
@@ -65,16 +56,13 @@ const signup = async (req, res) => {
 };
 
 const login = async (req, res) => {
-	let errors = {};
 	const user = {
 		email: req.body.email,
 		password: req.body.password
 	};
 
-	if (isEmpty(user.email)) errors.email = 'Email must not be empty';
-	if (isEmpty(user.password)) errors.password = 'Password must not be empty';
-
-	if (Object.keys(errors).length > 0) return res.status(400).json(errors);
+	const { valid, errors } = validateLoginData(user);
+	if (!valid) return res.status(400).json(errors);
 
 	try {
 		const userCredentials = await firebase.auth().signInWithEmailAndPassword(user.email, user.password);
@@ -94,4 +82,49 @@ const login = async (req, res) => {
 	}
 };
 
-module.exports = { login, signup };
+const uploadImage = (req, res) => {
+	const busboy = new BusBoy({ headers: req.headers });
+	let imageToBeUploaded = {};
+	let imageFileName;
+
+	busboy.on('file', (fieldname, file, filename, encoding, mimetype) => {
+		const imageExtension = filename.split('.')[filename.split('.').length - 1];
+		imageFileName = `${Math.round(Math.random() * 100000000000)}.${imageExtension}`;
+		const filePath = path.join(os.tmpdir(), imageFileName);
+		imageToBeUploaded = { filePath, mimetype };
+		file.pipe(fs.createWriteStream(filePath));
+	});
+
+	busboy.on('finish', () => {
+		admin
+			.storage()
+			.bucket()
+			.upload(imageToBeUploaded.filePath, {
+				resumable: false,
+				metadata: {
+					metadata: {
+						contentType: imageToBeUploaded.mimetype
+					}
+				}
+			})
+			.then(() => {
+				const profilePicture = `https://firebasestorage.googleapis.com/v0/b/${firebaseConfig.storageBucket}/o/${imageFileName}?alt=media`;
+				return db.doc(`/users/${req.user.username}`).update({ profilePicture });
+			})
+			.then(() => {
+				return res.json({
+					message: 'Image successfully uploaded'
+				});
+			})
+			.catch((err) => {
+				console.log(err);
+				res.status(400).json({
+					error: err.code
+				});
+			});
+	});
+
+	busboy.end(req.rawBody);
+};
+
+module.exports = { login, signup, uploadImage };
