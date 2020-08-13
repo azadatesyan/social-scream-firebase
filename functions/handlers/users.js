@@ -127,4 +127,8 @@ const uploadImage = (req, res) => {
 	busboy.end(req.rawBody);
 };
 
-module.exports = { login, signup, uploadImage };
+const updateUserDetails = (req,res) =>{
+
+};
+
+module.exports = { login, signup, uploadImage, updateUserDetails };

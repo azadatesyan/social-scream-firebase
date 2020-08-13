@@ -51,4 +51,17 @@ const validateLoginData = (data) => {
 	};
 };
 
-module.exports = { isEmail, isEmpty, validateSignupData, validateLoginData };
+const reduceUserDetails = (data) => {
+	let userDetails = {};
+	if(data.bio && !isEmpty(data.bio.trim())) userDetails.bio = data.bio;
+	if(data.website && !isEmpty(data.website.trim())){
+		if(data.website.trim().substring(0,4) !== 'http'){
+			userDetails.website = `http://${data.website.trim()}`;
+		}else{
+			userDetails.website = data.website.trim();
+		}
+	}
+	return userDetails;
+};
+
+module.exports = { isEmail, isEmpty, validateSignupData, validateLoginData, reduceUserDetails };
