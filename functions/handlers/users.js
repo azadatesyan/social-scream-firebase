@@ -135,7 +135,12 @@ const uploadImage = (req, res) => {
 const updateUserDetails = (req, res) => {
 	let userDetails = reduceUserDetails(req.body);
 	try {
-		db.doc.
+		db.doc(`/users/${req.user.username}`).update(userDetails);
+	} catch (err) {
+		console.log(err);
+		res.status(400).json({
+			error: err.code
+		});
 	}
 };
 
