@@ -1,4 +1,4 @@
-const { validateSignupData, validateLoginData } = require('../util/validations'),
+const { validateSignupData, validateLoginData, reduceUserDetails } = require('../util/validations'),
 	{ admin, firebase, db, firebaseConfig } = require('../config/config'),
 	BusBoy = require('busboy'),
 	path = require('path'),
@@ -132,8 +132,11 @@ const uploadImage = (req, res) => {
 	busboy.end(req.rawBody);
 };
 
-const updateUserDetails = (req,res) =>{
-
+const updateUserDetails = (req, res) => {
+	let userDetails = reduceUserDetails(req.body);
+	try {
+		db.doc.
+	}
 };
 
 module.exports = { login, signup, uploadImage, updateUserDetails };
