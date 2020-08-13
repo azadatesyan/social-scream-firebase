@@ -88,6 +88,11 @@ const uploadImage = (req, res) => {
 	let imageFileName;
 
 	busboy.on('file', (fieldname, file, filename, encoding, mimetype) => {
+		if (mimetype !== 'image/jpeg' && mimetype !== 'image/png') {
+			console.log(mimetype);
+			return res.json({ error: 'File is not an image' });
+		}
+		console.log(mimetype);
 		const imageExtension = filename.split('.')[filename.split('.').length - 1];
 		imageFileName = `${Math.round(Math.random() * 100000000000)}.${imageExtension}`;
 		const filePath = path.join(os.tmpdir(), imageFileName);
