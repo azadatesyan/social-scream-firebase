@@ -144,4 +144,14 @@ const updateUserDetails = (req, res) => {
 	}
 };
 
-module.exports = { login, signup, uploadImage, updateUserDetails };
+const getUserDetails = (req, res) => {
+	let userDetails = {};
+	db.doc(`/users/${req.user.username}`).get()
+	.then(data => {
+		if(data.exists){
+			console.log(data);
+		}
+	});
+};
+
+module.exports = { login, signup, uploadImage, updateUserDetails, getUserDetails };
