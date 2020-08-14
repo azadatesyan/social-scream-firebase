@@ -147,10 +147,24 @@ const updateUserDetails = (req, res) => {
 const getUserDetails = (req, res) => {
 	let userDetails = {};
 	db.doc(`/users/${req.user.username}`).get()
-	.then(data => {
-		if(data.exists){
-			console.log(data);
+	.then(doc => {
+		if(doc.exists){
+			console.log(doc.data());
+			userDetails.credentials = doc.data();
+			return db.collection('likes').where('username', '==', req.user.username).get();
 		}
+	})
+	.then(data => {
+		userDetails.likes = [];
+		data.forEach(like => {
+			userDetails.likes.push(like.data());
+		});
+	})
+	.then(() => {
+		return res.json(userDetails);
+	})
+	.catch(err => {
+		return res.json({error: err.code});
 	});
 };
 
