@@ -16,6 +16,30 @@ const getAllScreams = async (req, res) => {
 	}
 };
 
+const getOneScream = async (req, res) => {
+	const screamId = req.params.id;
+	const screamRef = db.doc(`/screams/${screamId}`);
+	const commentsRef = db.collection('comments').orderBy('createdAt', 'desc').where('screamId', '==', screamId);
+	const scream = {};
+	try {
+		const screamDoc = await screamRef.get();
+		if (screamDoc.exists) {
+			scream.details = screamDoc.data();
+			const commentsDoc = await commentsRef.get();
+			if (!commentsDoc.empty) {
+				scream.comments = [];
+				commentsDoc.forEach((comment) => scream.comments.push(comment.data()));
+			} else {
+			}
+			return res.json(scream);
+		} else {
+			return res.json({ scream: "scream doesn't exist" });
+		}
+	} catch (err) {
+		console.log(err);
+	}
+};
+
 const postOneScream = async (req, res) => {
 	try {
 		let screamToPush = {
@@ -36,4 +60,4 @@ const postOneScream = async (req, res) => {
 	}
 };
 
-module.exports = { getAllScreams, postOneScream };
+module.exports = { getAllScreams, getOneScream, postOneScream };

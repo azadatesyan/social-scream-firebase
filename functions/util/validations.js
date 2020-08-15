@@ -42,7 +42,7 @@ const validateSignupData = (data) => {
 
 const validateLoginData = (data) => {
 	let errors = {};
-	if (isEmpty(data.email)) errors.email = 'Email must not be empty';
+	if (isEmpty(data.email) || !isEmail(data.email)) errors.email = 'Email must be valid';
 	if (isEmpty(data.password)) errors.password = 'Password must not be empty';
 
 	return {
@@ -53,11 +53,11 @@ const validateLoginData = (data) => {
 
 const reduceUserDetails = (data) => {
 	let userDetails = {};
-	if(data.bio && !isEmpty(data.bio.trim())) userDetails.bio = data.bio;
-	if(data.website && !isEmpty(data.website.trim())){
-		if(data.website.trim().substring(0,4) !== 'http'){
+	if (data.bio && !isEmpty(data.bio.trim())) userDetails.bio = data.bio;
+	if (data.website && !isEmpty(data.website.trim())) {
+		if (data.website.trim().substring(0, 4) !== 'http') {
 			userDetails.website = `http://${data.website.trim()}`;
-		}else{
+		} else {
 			userDetails.website = data.website.trim();
 		}
 	}
