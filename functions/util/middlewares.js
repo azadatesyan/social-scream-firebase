@@ -15,6 +15,7 @@ const isAuth = async (req, res, next) => {
 		req.user = decodedToken;
 		const userSnapshot = await db.collection('users').where('userId', '==', req.user.uid).limit(1).get();
 		req.user.username = await userSnapshot.docs[0].data().username;
+		req.user.profilePicture = await userSnapshot.docs[0].data().profilePicture;
 		return next();
 	} catch (err) {
 		if (err.code === 'auth/id-token-expired') {

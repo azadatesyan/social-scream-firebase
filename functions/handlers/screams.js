@@ -42,15 +42,17 @@ const getOneScream = async (req, res) => {
 
 const postOneScream = async (req, res) => {
 	try {
-		let screamToPush = {
+		const screamToPush = {
 			text: req.body.text,
 			username: req.user.username,
-			createdAt: admin.firestore.Timestamp.fromDate(new Date())
+			userImage: req.user.profilePicture,
+			createdAt: admin.firestore.Timestamp.fromDate(new Date()),
+			likeCount: 0,
+			commentCount: 0
 		};
 		const createdScream = await db.collection('screams').add(screamToPush);
-		res.status(200).json({
-			message: `Scream ${createdScream.id} created successfully`
-		});
+		screamToPush.id = createdScream.id;
+		res.status(200).json(screamToPush);
 	} catch (err) {
 		console.log(err);
 		res.status(500).json({
@@ -60,4 +62,52 @@ const postOneScream = async (req, res) => {
 	}
 };
 
-module.exports = { getAllScreams, getOneScream, postOneScream };
+const commentScream = async (req, res) => {
+	const screamId = req.params.id;
+	const commentToPush = {
+		screamId: screamId,
+		username: req.user.username,
+		createdAt: admin.firestore.Timestamp.fromDate(new Date()),
+		text: req.body.text,
+		userImage: req.user.profilePicture
+	};
+	try {
+		await db.collection('comments').add(commentToPush);
+		await db.doc(`screams/${req.params.id}`).update({ commentCount: admin.firestore.FieldValue.increment(1) });
+		return res.json(commentToPush);
+	} catch (err) {
+		return res.json({ error: err.code });
+	}
+};
+
+const likeScream = async (req, res) => {
+	const screamId = req.params.id;
+	const username = req.user.username;
+	const screamRef = db.doc(`screams/${screamId}`);
+	const screamData = {};
+	const likeRef = db.collection('likes').where('screamId', '==', screamId).where('username', '==', username).limit(1);
+
+	try {
+		const screamDoc = await screamRef.get();
+		if (screamDoc.exists) {
+			const likeDoc = await likeRef.get();
+			screamData = screamDoc.data();
+			if (likeDoc.empty) {
+				await db.collection('likes').add({ screamId, username });
+				await screamRef.update({ likeCount: admin.firestore.FieldValue.increment(1) });
+				screamData.likeCount++;
+				return res.json(screamData);
+			} else {
+				res.json({ error: "You've already liked this scream" });
+			}
+		} else {
+			res.json({ error: 'Scream not found' });
+		}
+	} catch (err) {
+		res.json({ error: err.code });
+	}
+};
+
+const unlikeScream = async (req, res) => {};
+
+module.exports = { getAllScreams, getOneScream, postOneScream, commentScream, likeScream, unlikeScream };

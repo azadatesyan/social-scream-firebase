@@ -1,5 +1,12 @@
 const functions = require('firebase-functions'),
-	{ getAllScreams, getOneScream, postOneScream } = require('./handlers/screams'),
+	{
+		getAllScreams,
+		getOneScream,
+		postOneScream,
+		commentScream,
+		likeScream,
+		unlikeScream
+	} = require('./handlers/screams'),
 	{ login, signup, uploadImage, updateUserDetails, getUserDetails } = require('./handlers/users'),
 	isAuth = require('./util/middlewares'),
 	app = require('express')();
@@ -9,7 +16,12 @@ app.get('/screams', getAllScreams);
 app.get('/screams/:id', getOneScream);
 app.post('/screams/new', isAuth, postOneScream);
 
-//AUTH ROUTES
+//Comments & Likes Routes
+app.post('/screams/:id/comment', isAuth, commentScream);
+app.get('/screams/:id/like', isAuth, likeScream);
+app.get('/screams/:id/unlike', isAuth, unlikeScream);
+
+//Auth routes
 app.post('/signup', signup);
 app.post('/login', login);
 
