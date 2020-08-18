@@ -42,7 +42,7 @@ exports.createNotificationOnLike = functions
 	.onCreate(async (snapshot) => {
 		try {
 			const screamDoc = await db.doc(`screams/${snapshot.data().screamId}`).get();
-			db.collection('notifications').add({
+			db.doc(`notifications/${snapshot.id}`).set({
 				createdAt: new Date().toISOString(),
 				recipient: screamDoc.data().username,
 				sender: snapshot.data().username,
@@ -50,6 +50,53 @@ exports.createNotificationOnLike = functions
 				read: false,
 				screamId: screamDoc.id
 			});
+			return;
+		} catch (err) {
+			console.error(err);
+			return;
+		}
+	});
+
+exports.deleteNotificationOnUnlike = functions
+	.region('europe-west1')
+	.firestore.document('likes/{likeId}')
+	.onDelete(async (snapshot) => {
+		try {
+			db.doc(`notifications/${snapshot.id}`).delete();
+			return;
+		} catch (err) {
+			console.error(err);
+			return;
+		}
+	});
+
+exports.createNotificationOnComment = functions
+	.region('europe-west1')
+	.firestore.document('comments/{commentId}')
+	.onCreate(async (snapshot) => {
+		try {
+			const screamDoc = await db.doc(`screams/${snapshot.data().screamId}`).get();
+			db.doc(`notifications/${snapshot.id}`).set({
+				createdAt: new Date().toISOString(),
+				recipient: screamDoc.data().username,
+				sender: snapshot.data().username,
+				type: 'comment',
+				read: false,
+				screamId: screamDoc.id
+			});
+			return;
+		} catch (err) {
+			console.error(err);
+			return;
+		}
+	});
+
+exports.deleteNotificationOnUncomment = functions
+	.region('europe-west1')
+	.firestore.document('comments/{commentId}')
+	.onDelete(async (snapshot) => {
+		try {
+			db.doc(`notifications/${snapshot.id}`).delete();
 			return;
 		} catch (err) {
 			console.error(err);
