@@ -84,7 +84,7 @@ const likeScream = async (req, res) => {
 	const screamId = req.params.id;
 	const username = req.user.username;
 	const screamRef = db.doc(`screams/${screamId}`);
-	const screamData = {};
+	let screamData = {};
 	const likeRef = db.collection('likes').where('screamId', '==', screamId).where('username', '==', username).limit(1);
 
 	try {
@@ -98,16 +98,86 @@ const likeScream = async (req, res) => {
 				screamData.likeCount++;
 				return res.json(screamData);
 			} else {
-				res.json({ error: "You've already liked this scream" });
+				return res.json({ error: "You've already liked this scream" });
+			}
+		} else {
+			return res.json({ error: 'Scream not found' });
+		}
+	} catch (err) {
+		return res.json({ error: err });
+	}
+};
+
+const unlikeScream = async (req, res) => {
+	const screamId = req.params.id;
+	const username = req.user.username;
+	const screamRef = db.doc(`screams/${screamId}`);
+	const likeRef = db.collection('likes').where('username', '==', username).where('screamId', '==', screamId).limit(1);
+	let screamData = {};
+
+	try {
+		const screamDoc = await screamRef.get();
+		if (screamDoc.exists) {
+			const likeQuery = await likeRef.get();
+			if (!likeQuery.empty) {
+				screamData = screamDoc.data();
+				screamData.id = screamRef.id;
+				await likeQuery.docs[0].ref.delete();
+				await db.doc(`screams/${screamId}`).update({ likeCount: admin.firestore.FieldValue.increment(-1) });
+				screamData.likeCount--;
+				return res.json({ screamData });
+			} else {
+				res.json({ error: "You don't currently like this scream" });
 			}
 		} else {
 			res.json({ error: 'Scream not found' });
 		}
 	} catch (err) {
+		console.log(err);
 		res.json({ error: err.code });
 	}
 };
 
-const unlikeScream = async (req, res) => {};
+const deleteOneScream = async (req, res) => {
+	const screamId = req.params.id;
+	const username = req.user.username;
+	const screamRef = db.doc(`screams/${screamId}`);
+	const likesRef = db.collection('likes').where('screamId', '==', screamId);
+	const commentsRef = db.collection('comments').where('screamId', '==', screamId);
 
-module.exports = { getAllScreams, getOneScream, postOneScream, commentScream, likeScream, unlikeScream };
+	try {
+		const screamDoc = await screamRef.get();
+		if (screamDoc.exists) {
+			const screamData = screamDoc.data();
+			if (screamData.username === username) {
+				await screamRef.delete();
+				const likesDoc = await likesRef.get();
+				likesDoc.forEach(async (like) => {
+					await like.ref.delete();
+				});
+				const commentsDoc = await commentsRef.get();
+				commentsDoc.forEach(async (comment) => {
+					await comment.ref.delete();
+				});
+				return res.json({ msg: 'Successfully deleted post and all associated likes & comments' });
+			} else {
+				return res.json({ error: 'Unauthorized' });
+			}
+		} else {
+			return res.json({ error: 'Scream not found' });
+		}
+	} catch (err) {
+		console.log(err);
+		return res.json({ error: err.code });
+	}
+};
+
+module.exports = {
+	getAllScreams,
+	getOneScream,
+	postOneScream,
+	commentScream,
+	likeScream,
+	unlikeScream,
+	deleteOneScream
+};
