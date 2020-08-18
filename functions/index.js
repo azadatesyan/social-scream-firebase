@@ -8,7 +8,14 @@ const functions = require('firebase-functions'),
 		unlikeScream,
 		deleteOneScream
 	} = require('./handlers/screams'),
-	{ login, signup, uploadImage, updateUserDetails, getUserDetails } = require('./handlers/users'),
+	{
+		login,
+		signup,
+		uploadImage,
+		updateCurrentUserDetails,
+		getCurrentUserDetails,
+		getUserDetails
+	} = require('./handlers/users'),
 	isAuth = require('./util/middlewares'),
 	{ db } = require('./config/config'),
 	app = require('express')();
@@ -29,8 +36,9 @@ app.post('/signup', signup);
 app.post('/login', login);
 
 // User routes
-app.get('/user/details', isAuth, getUserDetails);
-app.post('/user/details', isAuth, updateUserDetails);
+app.get('/user', isAuth, getCurrentUserDetails);
+app.get('/user', getUserDetails);
+app.post('/user', isAuth, updateCurrentUserDetails);
 app.post('/user/image', isAuth, uploadImage);
 
 exports.api = functions.region('europe-west1').https.onRequest(app);

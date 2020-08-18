@@ -132,7 +132,7 @@ const uploadImage = (req, res) => {
 	busboy.end(req.rawBody);
 };
 
-const updateUserDetails = (req, res) => {
+const updateCurrentUserDetails = (req, res) => {
 	let userDetails = reduceUserDetails(req.body);
 	try {
 		db.doc(`/users/${req.user.username}`).update(userDetails);
@@ -144,28 +144,92 @@ const updateUserDetails = (req, res) => {
 	}
 };
 
-const getUserDetails = (req, res) => {
+const getCurrentUserDetails = (req, res) => {
 	let userDetails = {};
-	db.doc(`/users/${req.user.username}`).get()
-	.then(doc => {
-		if(doc.exists){
-			console.log(doc.data());
-			userDetails.credentials = doc.data();
-			return db.collection('likes').where('username', '==', req.user.username).get();
-		}
-	})
-	.then(data => {
-		userDetails.likes = [];
-		data.forEach(like => {
-			userDetails.likes.push(like.data());
+	db.doc(`/users/${req.user.username}`)
+		.get()
+		.then((doc) => {
+			if (doc.exists) {
+				console.log(doc.data());
+				userDetails.credentials = doc.data();
+				return db.collection('likes').where('username', '==', req.user.username).get();
+			}
+		})
+		.then((data) => {
+			userDetails.likes = [];
+			data.forEach((like) => {
+				userDetails.likes.push(like.data());
+			});
+			return db
+				.collection('notifications')
+				.where('recipient', '==', req.user.username)
+				.orderBy('createdAd', 'desc')
+				.limit(10)
+				.get();
+		})
+		.then((documents) => {
+			userDetails.notifications = [];
+			documents.forEach((document) => {
+				let { recipient, sender, read, screamId, type, createdAt } = document.data();
+				userDetails.notifications.push({
+					recipient,
+					sender,
+					read,
+					screamId,
+					type,
+					createdAt,
+					notificationId: document.id
+				});
+			});
+			return res.json(userDetails);
+		})
+		.catch((err) => {
+			return res.json({ error: err.code });
 		});
-	})
-	.then(() => {
-		return res.json(userDetails);
-	})
-	.catch(err => {
-		return res.json({error: err.code});
-	});
 };
 
-module.exports = { login, signup, uploadImage, updateUserDetails, getUserDetails };
+const getUserDetails = (req, res) => {
+	let userDetails = {};
+	db.doc(`/users/${req.params.username}`)
+		.get()
+		.then((doc) => {
+			if (doc.exists) {
+				console.log(doc.data());
+				userDetails.credentials = doc.data();
+				return db.collection('likes').where('username', '==', req.params.username).get();
+			}
+		})
+		.then((data) => {
+			userDetails.likes = [];
+			data.forEach((like) => {
+				userDetails.likes.push(like.data());
+			});
+			return db
+				.collection('notifications')
+				.where('recipient', '==', req.params.username)
+				.orderBy('createdAd', 'desc')
+				.limit(10)
+				.get();
+		})
+		.then((documents) => {
+			userDetails.notifications = [];
+			documents.forEach((document) => {
+				let { recipient, sender, read, screamId, type, createdAt } = document.data();
+				userDetails.notifications.push({
+					recipient,
+					sender,
+					read,
+					screamId,
+					type,
+					createdAt,
+					notificationId: document.id
+				});
+			});
+			return res.json(userDetails);
+		})
+		.catch((err) => {
+			return res.json({ error: err.code });
+		});
+};
+
+module.exports = { login, signup, uploadImage, updateCurrentUserDetails, getCurrentUserDetails, getUserDetails };
