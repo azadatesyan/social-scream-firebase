@@ -190,13 +190,13 @@ const getCurrentUserDetails = (req, res) => {
 
 const getUserDetails = (req, res) => {
 	let userDetails = {};
-	db.doc(`/users/${req.params.username}`)
+	db.doc(`/users/${req.params.id}`)
 		.get()
 		.then((doc) => {
 			if (doc.exists) {
 				console.log(doc.data());
 				userDetails.credentials = doc.data();
-				return db.collection('likes').where('username', '==', req.params.username).get();
+				return db.collection('likes').where('username', '==', req.params.id).get();
 			}
 		})
 		.then((data) => {
@@ -206,7 +206,7 @@ const getUserDetails = (req, res) => {
 			});
 			return db
 				.collection('notifications')
-				.where('recipient', '==', req.params.username)
+				.where('recipient', '==', req.params.id)
 				.orderBy('createdAd', 'desc')
 				.limit(10)
 				.get();
@@ -232,4 +232,28 @@ const getUserDetails = (req, res) => {
 		});
 };
 
-module.exports = { login, signup, uploadImage, updateCurrentUserDetails, getCurrentUserDetails, getUserDetails };
+const markNotificationsRead = async (req, res) => {
+	const batch = db.batch();
+	req.body.forEach((notificationId) => {
+		console.log(notificationId);
+		const notification = db.doc(`notifications/${notificationId}`);
+		batch.update(notification, { read: true });
+	});
+	try {
+		await batch.commit();
+		return res.json({ message: 'Notifications have been marked read' });
+	} catch (err) {
+		console.log(err);
+		return res.json({ error: err.code });
+	}
+};
+
+module.exports = {
+	login,
+	signup,
+	uploadImage,
+	updateCurrentUserDetails,
+	getCurrentUserDetails,
+	getUserDetails,
+	markNotificationsRead
+};

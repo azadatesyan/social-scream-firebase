@@ -14,7 +14,8 @@ const functions = require('firebase-functions'),
 		uploadImage,
 		updateCurrentUserDetails,
 		getCurrentUserDetails,
-		getUserDetails
+		getUserDetails,
+		markNotificationsRead
 	} = require('./handlers/users'),
 	isAuth = require('./util/middlewares'),
 	{ db } = require('./config/config'),
@@ -26,20 +27,23 @@ app.get('/screams/:id', getOneScream);
 app.post('/screams/new', isAuth, postOneScream);
 app.delete('/screams/:id', isAuth, deleteOneScream);
 
-//Comments & Likes Routes
+// Comments & Likes Routes
 app.post('/screams/:id/comment', isAuth, commentScream);
 app.get('/screams/:id/like', isAuth, likeScream);
 app.get('/screams/:id/unlike', isAuth, unlikeScream);
 
-//Auth routes
+// Auth routes
 app.post('/signup', signup);
 app.post('/login', login);
 
 // User routes
 app.get('/user', isAuth, getCurrentUserDetails);
-app.get('/user', getUserDetails);
+app.get('/user/:id', getUserDetails);
 app.post('/user', isAuth, updateCurrentUserDetails);
 app.post('/user/image', isAuth, uploadImage);
+
+// Notifications routes
+app.post('/notifications', isAuth, markNotificationsRead);
 
 exports.api = functions.region('europe-west1').https.onRequest(app);
 
