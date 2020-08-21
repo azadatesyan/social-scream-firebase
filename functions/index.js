@@ -119,14 +119,12 @@ exports.deleteNotificationOnUncomment = functions
 exports.updateProfilePictureOnScreams = functions
 	.region('europe-west1')
 	.firestore.document('users/{username}')
-	.onUpdate(async (changeSnapshot) => {
+	.onUpdate(async (changeSnapshot, context) => {
 		const batch = db.batch();
+		const username = context.params.username;
 		if (changeSnapshot.before.data().profilePicture !== changeSnapshot.after.data().profilePicture) {
 			try {
-				const screams = await db
-					.collection('screams')
-					.where('username', '==', changeSnapshot.after.data().username)
-					.get();
+				const screams = await db.collection('screams').where('username', '==', username).get();
 				batch.update(screams, { userImage: changeSnapshot.after.data().profilePicture });
 				return batch.commit();
 			} catch (err) {
@@ -139,11 +137,12 @@ exports.updateProfilePictureOnScreams = functions
 exports.deleteCommentsAndLikesOnScreamDelete = functions
 	.region('europe-west1')
 	.firestore.document('screams/{screamId}')
-	.onDelete(async (snapshot) => {
+	.onDelete(async (snapshot, context) => {
 		const batch = db.batch();
+		const screamId = context.params.screamId;
 		try {
-			const relatedLikes = await db.collection('likes').where('screamId', '==', snapshot.id).get();
-			const relatedComments = await db.collection('comments').where('screamId', '==', snapshot.id).get();
+			const relatedLikes = await db.collection('likes').where('screamId', '==', screamId).get();
+			const relatedComments = await db.collection('comments').where('screamId', '==', screamId).get();
 			return batch.delete(relatedComments).delete(relatedLikes).commit();
 		} catch (err) {
 			console.log(err);
