@@ -115,3 +115,38 @@ exports.deleteNotificationOnUncomment = functions
 			return;
 		}
 	});
+
+exports.updateProfilePictureOnScreams = functions
+	.region('europe-west1')
+	.firestore.document('users/{username}')
+	.onUpdate(async (changeSnapshot) => {
+		const batch = db.batch();
+		if (changeSnapshot.before.data().profilePicture !== changeSnapshot.after.data().profilePicture) {
+			try {
+				const screams = await db
+					.collection('screams')
+					.where('username', '==', changeSnapshot.after.data().username)
+					.get();
+				batch.update(screams, { userImage: changeSnapshot.after.data().profilePicture });
+				return batch.commit();
+			} catch (err) {
+				console.log(error);
+				return err.code;
+			}
+		}
+	});
+
+exports.deleteCommentsAndLikesOnScreamDelete = functions
+	.region('europe-west1')
+	.firestore.document('screams/{screamId}')
+	.onDelete(async (snapshot) => {
+		const batch = db.batch();
+		try {
+			const relatedLikes = await db.collection('likes').where('screamId', '==', snapshot.id).get();
+			const relatedComments = await db.collection('comments').where('screamId', '==', snapshot.id).get();
+			return batch.delete(relatedComments).delete(relatedLikes).commit();
+		} catch (err) {
+			console.log(err);
+			return err.code;
+		}
+	});

@@ -151,14 +151,6 @@ const deleteOneScream = async (req, res) => {
 			const screamData = screamDoc.data();
 			if (screamData.username === username) {
 				await screamRef.delete();
-				const likesDoc = await likesRef.get();
-				likesDoc.forEach(async (like) => {
-					await like.ref.delete();
-				});
-				const commentsDoc = await commentsRef.get();
-				commentsDoc.forEach(async (comment) => {
-					await comment.ref.delete();
-				});
 				return res.json({ msg: 'Successfully deleted post and all associated likes & comments' });
 			} else {
 				return res.json({ error: 'Unauthorized' });
