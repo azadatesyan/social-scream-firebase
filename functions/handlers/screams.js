@@ -46,7 +46,7 @@ const postOneScream = async (req, res) => {
 			text: req.body.text,
 			username: req.user.username,
 			userImage: req.user.profilePicture,
-			createdAt: admin.firestore.Timestamp.fromDate(new Date()),
+			createdAt: new Date().toISOString(),
 			likeCount: 0,
 			commentCount: 0
 		};
@@ -67,7 +67,7 @@ const commentScream = async (req, res) => {
 	const commentToPush = {
 		screamId: screamId,
 		username: req.user.username,
-		createdAt: admin.firestore.Timestamp.fromDate(new Date()),
+		createdAt: new Date().toISOString(),
 		text: req.body.text,
 		userImage: req.user.profilePicture
 	};
