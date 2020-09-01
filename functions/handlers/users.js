@@ -70,14 +70,23 @@ const login = async (req, res) => {
 		res.json({ userToken });
 	} catch (err) {
 		console.log(err);
-		if (err.code === 'auth/wrong-password') {
-			return res.status(403).json({
-				general: 'Wrong credentials, please try again'
-			});
-		} else {
-			return res.status(500).json({
-				error: err.code
-			});
+		switch (err.code) {
+			case 'auth/wrong-password':
+				return res.status(403).json({
+					general: 'Wrong credentials, please try again'
+				});
+			case 'auth/too-many-requests':
+				return res.status(403).json({
+					general: 'Too many attempts, please try again later'
+				});
+			case 'auth/user-not-found':
+				return res.status(403).json({
+					general: 'This account does not exist'
+				});
+			default:
+				return res.status(500).json({
+					general: err.code
+				});
 		}
 	}
 };
