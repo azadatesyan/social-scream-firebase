@@ -132,10 +132,11 @@ const uploadImage = (req, res) => {
 	busboy.end(req.rawBody);
 };
 
-const updateCurrentUserDetails = (req, res) => {
+const updateCurrentUserDetails = async (req, res) => {
 	let userDetails = reduceUserDetails(req.body);
 	try {
-		db.doc(`/users/${req.user.username}`).update(userDetails);
+		await db.doc(`/users/${req.user.username}`).update(userDetails);
+		res.json({ message: 'Details updated successfully' });
 	} catch (err) {
 		console.log(err);
 		res.status(400).json({
