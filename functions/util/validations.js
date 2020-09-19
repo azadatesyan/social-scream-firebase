@@ -29,7 +29,7 @@ const validateSignupData = (data) => {
 		if (isEmpty(data[key])) {
 			errors = {
 				...errors,
-				[key]: `${key} must not be empty`
+				[key]: `Must not be empty`
 			};
 		}
 	});
@@ -43,7 +43,7 @@ const validateSignupData = (data) => {
 const validateLoginData = (data) => {
 	let errors = {};
 	if (isEmpty(data.email) || !isEmail(data.email)) errors.email = 'Email must be valid';
-	if (isEmpty(data.password)) errors.password = 'Password must not be empty';
+	if (isEmpty(data.password)) errors.password = 'Must not be empty';
 
 	return {
 		valid: Object.keys(errors).length === 0 ? true : false,

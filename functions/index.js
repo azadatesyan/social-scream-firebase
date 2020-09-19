@@ -19,7 +19,10 @@ const functions = require('firebase-functions'),
 	} = require('./handlers/users'),
 	isAuth = require('./util/middlewares'),
 	{ db } = require('./config/config'),
+	cors = require("cors"),
 	app = require('express')();
+
+app.use(cors());
 
 // Scream routes
 app.get('/screams', getAllScreams);
