@@ -143,9 +143,10 @@ const uploadImage = (req, res) => {
 
 const updateCurrentUserDetails = async (req, res) => {
 	let userDetails = reduceUserDetails(req.body);
+	console.log(userDetails);
 	try {
 		await db.doc(`/users/${req.user.username}`).update(userDetails);
-		res.json({ message: 'Details updated successfully' });
+		res.status(200).json({ message: 'Details updated successfully' });
 	} catch (err) {
 		console.log(err);
 		res.status(400).json({
