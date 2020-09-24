@@ -92,6 +92,7 @@ const likeScream = async (req, res) => {
 		if (screamDoc.exists) {
 			const likeDoc = await likeRef.get();
 			screamData = screamDoc.data();
+			screamData.screamId = screamRef.id;
 			if (likeDoc.empty) {
 				await db.collection('likes').add({ screamId, username });
 				await screamRef.update({ likeCount: admin.firestore.FieldValue.increment(1) });
