@@ -10,9 +10,10 @@ const getAllScreams = async (req, res) => {
 				...scream.data()
 			});
 		});
-		return res.json(screams);
+		return res.status(200).json(screams);
 	} catch (err) {
 		console.log(err);
+		return res.status(404).json({error: err}); 
 	}
 };
 
@@ -29,14 +30,14 @@ const getOneScream = async (req, res) => {
 			if (!commentsDoc.empty) {
 				scream.comments = [];
 				commentsDoc.forEach((comment) => scream.comments.push(comment.data()));
-			} else {
 			}
-			return res.json(scream);
+			return res.status(200).json(scream);
 		} else {
-			return res.json({ scream: "scream doesn't exist" });
+			return res.status(404).json({ scream: "scream doesn't exist" });
 		}
 	} catch (err) {
 		console.log(err);
+		return res.status(404).json({error: err});
 	}
 };
 
@@ -74,9 +75,9 @@ const commentScream = async (req, res) => {
 	try {
 		await db.collection('comments').add(commentToPush);
 		await db.doc(`screams/${req.params.id}`).update({ commentCount: admin.firestore.FieldValue.increment(1) });
-		return res.json(commentToPush);
+		return res.status(200).json(commentToPush);
 	} catch (err) {
-		return res.json({ error: err.code });
+		return res.status(500).json({ error: err.code });
 	}
 };
 
@@ -97,15 +98,15 @@ const likeScream = async (req, res) => {
 				await db.collection('likes').add({ screamId, username });
 				await screamRef.update({ likeCount: admin.firestore.FieldValue.increment(1) });
 				screamData.likeCount++;
-				return res.json(screamData);
+				return res.status(200).json(screamData);
 			} else {
-				return res.json({ error: "You've already liked this scream" });
+				return res.status(409).json({ error: "You've already liked this scream" });
 			}
 		} else {
-			return res.json({ error: 'Scream not found' });
+			return res.status(404).json({ error: 'Scream not found' });
 		}
 	} catch (err) {
-		return res.json({ error: err });
+		return res.status(500).json({ error: err });
 	}
 };
 
@@ -126,16 +127,16 @@ const unlikeScream = async (req, res) => {
 				await likeQuery.docs[0].ref.delete();
 				await db.doc(`screams/${screamId}`).update({ likeCount: admin.firestore.FieldValue.increment(-1) });
 				screamData.likeCount--;
-				return res.json({ screamData });
+				return res.status(200).json({ screamData });
 			} else {
-				res.json({ error: "You don't currently like this scream" });
+				return res.status(409).json({ error: "You don't currently like this scream" });
 			}
 		} else {
-			res.json({ error: 'Scream not found' });
+			return res.status(404).json({ error: 'Scream not found' });
 		}
 	} catch (err) {
 		console.log(err);
-		res.json({ error: err.code });
+		res.status(500).json({ error: err.code });
 	}
 };
 
@@ -156,16 +157,16 @@ const deleteOneScream = async (req, res) => {
 				const commentsDocs = await commentsRef.get();
 				!likesDocs.empty && await likesRef.delete();
 				!commentsDocs.empty && await commentsRef.delete();
-				return res.json({ msg: 'Successfully deleted post and all associated likes & comments' });
+				return res.status(200).json({ msg: 'Successfully deleted post and all associated likes & comments' });
 			} else {
-				return res.json({ error: 'Unauthorized' });
+				return res.status(401).json({ error: 'Unauthorized' });
 			}
 		} else {
-			return res.json({ error: 'Scream not found' });
+			return res.status(404).json({ error: 'Scream not found' });
 		}
 	} catch (err) {
 		console.log(err);
-		return res.json({ error: err.code });
+		return res.status(500).json({ error: err.code });
 	}
 };
 

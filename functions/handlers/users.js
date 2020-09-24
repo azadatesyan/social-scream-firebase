@@ -22,7 +22,7 @@ const signup = async (req, res) => {
 	const userExists = userExistsSnapshot.exists;
 
 	if (userExists) {
-		res.status(400).json({
+		return res.status(400).json({
 			username: 'This username is already taken'
 		});
 	} else {
@@ -39,15 +39,15 @@ const signup = async (req, res) => {
 				createdAt: admin.firestore.Timestamp.fromDate(new Date())
 			};
 			db.doc(`/users/${newUser.username}`).set(createdUser);
-			res.status(201).json({ token });
+			return res.status(201).json({ token });
 		} catch (err) {
 			console.log(err);
 			if (err.code === 'auth/email-already-in-use') {
-				res.status(400).json({
+				return res.status(400).json({
 					email: 'This email is already in use'
 				});
 			} else {
-				res.status(500).json({
+				return res.status(500).json({
 					error: err.code
 				});
 			}
@@ -99,7 +99,7 @@ const uploadImage = (req, res) => {
 	busboy.on('file', (fieldname, file, filename, encoding, mimetype) => {
 		if (mimetype !== 'image/jpeg' && mimetype !== 'image/png') {
 			console.log(mimetype);
-			return res.json({ error: 'File is not an image' });
+			return res.status(400).json({ error: 'File is not an image' });
 		}
 		console.log(mimetype);
 		const imageExtension = filename.split('.')[filename.split('.').length - 1];
@@ -126,13 +126,13 @@ const uploadImage = (req, res) => {
 				return db.doc(`/users/${req.user.username}`).update({ profilePicture });
 			})
 			.then(() => {
-				return res.json({
+				return res.status(201).json({
 					message: 'Image successfully uploaded'
 				});
 			})
 			.catch((err) => {
 				console.log(err);
-				res.status(400).json({
+				return res.status(400).json({
 					error: err.code
 				});
 			});
@@ -146,10 +146,10 @@ const updateCurrentUserDetails = async (req, res) => {
 	console.log(userDetails);
 	try {
 		await db.doc(`/users/${req.user.username}`).update(userDetails);
-		res.status(200).json({ message: 'Details updated successfully' });
+		return res.status(200).json({ message: 'Details updated successfully' });
 	} catch (err) {
 		console.log(err);
-		res.status(400).json({
+		return res.status(400).json({
 			error: err.code
 		});
 	}
@@ -192,10 +192,10 @@ const getCurrentUserDetails = (req, res) => {
 					notificationId: document.id
 				});
 			});
-			return res.json(userDetails);
+			return res.status(200).json(userDetails);
 		})
 		.catch((err) => {
-			return res.json({ error: err.code });
+			return res.status(500).json({ error: err.code });
 		});
 };
 
@@ -236,10 +236,10 @@ const getUserDetails = (req, res) => {
 					notificationId: document.id
 				});
 			});
-			return res.json(userDetails);
+			return res.status(200).json(userDetails);
 		})
 		.catch((err) => {
-			return res.json({ error: err.code });
+			return res.status(500).json({ error: err.code });
 		});
 };
 
@@ -252,10 +252,10 @@ const markNotificationsRead = async (req, res) => {
 	});
 	try {
 		await batch.commit();
-		return res.json({ message: 'Notifications have been marked read' });
+		return res.status(200).json({ message: 'Notifications have been marked read' });
 	} catch (err) {
 		console.log(err);
-		return res.json({ error: err.code });
+		return res.status(500).json({ error: err.code });
 	}
 };
 
