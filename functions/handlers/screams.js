@@ -122,7 +122,7 @@ const unlikeScream = async (req, res) => {
 			const likeQuery = await likeRef.get();
 			if (!likeQuery.empty) {
 				screamData = screamDoc.data();
-				screamData.id = screamRef.id;
+				screamData.screamId = screamRef.id;
 				await likeQuery.docs[0].ref.delete();
 				await db.doc(`screams/${screamId}`).update({ likeCount: admin.firestore.FieldValue.increment(-1) });
 				screamData.likeCount--;
