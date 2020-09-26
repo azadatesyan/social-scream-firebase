@@ -91,6 +91,26 @@ const login = async (req, res) => {
 	}
 };
 
+const logout = async (req, res) => {
+	const uid = req.user.uid;
+	console.log(uid);
+	admin.auth().revokeRefreshTokens(uid)
+		.then(() => {
+			return admin.auth().getUser(uid);
+		})
+		.then((userRecord) => {
+			return new Date(userRecord.tokensValidAfterTime).getTime() / 1000;
+		})
+		.then((timestamp) => {
+			console.log('Tokens revoked at: ', timestamp);
+			res.status(200).json({timestamp});
+		})
+		.catch(err => {
+			console.log(err);
+			res.status(500).json({err});
+		});
+};
+
 const uploadImage = (req, res) => {
 	const busboy = new BusBoy({ headers: req.headers });
 	let imageToBeUploaded = {};
@@ -261,6 +281,7 @@ const markNotificationsRead = async (req, res) => {
 
 module.exports = {
 	login,
+	logout,
 	signup,
 	uploadImage,
 	updateCurrentUserDetails,

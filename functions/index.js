@@ -11,6 +11,7 @@ const functions = require('firebase-functions'),
 	{
 		login,
 		signup,
+		logout,
 		uploadImage,
 		updateCurrentUserDetails,
 		getCurrentUserDetails,
@@ -38,6 +39,7 @@ app.get('/screams/:id/unlike', isAuth, unlikeScream);
 // Auth routes
 app.post('/signup', signup);
 app.post('/login', login);
+app.get('/logout', isAuth, logout);
 
 // User routes
 app.get('/user', isAuth, getCurrentUserDetails);

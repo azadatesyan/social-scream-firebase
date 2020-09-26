@@ -11,7 +11,7 @@ const isAuth = async (req, res, next) => {
 		});
 	}
 	try {
-		const decodedToken = await admin.auth().verifyIdToken(idToken);
+		const decodedToken = await admin.auth().verifyIdToken(idToken, true);
 		req.user = decodedToken;
 		const userSnapshot = await db.collection('users').where('userId', '==', req.user.uid).limit(1).get();
 		req.user.username = await userSnapshot.docs[0].data().username;
