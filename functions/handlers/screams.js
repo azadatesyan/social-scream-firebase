@@ -42,6 +42,8 @@ const getOneScream = async (req, res) => {
 };
 
 const postOneScream = async (req, res) => {
+	console.log(req.body.text);
+	console.log(req.body);
 	try {
 		const screamToPush = {
 			text: req.body.text,
@@ -51,8 +53,9 @@ const postOneScream = async (req, res) => {
 			likeCount: 0,
 			commentCount: 0
 		};
+		console.log(screamToPush);
 		const createdScream = await db.collection('screams').add(screamToPush);
-		screamToPush.id = createdScream.id;
+		screamToPush.screamId = createdScream.id;
 		res.status(200).json(screamToPush);
 	} catch (err) {
 		console.log(err);
