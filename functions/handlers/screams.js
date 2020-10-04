@@ -1,4 +1,5 @@
 const { db, admin } = require('../config/config');
+const {isEmpty} = require('../util/validations');
 
 const getAllScreams = async (req, res) => {
 	try {
@@ -21,14 +22,15 @@ const getOneScream = async (req, res) => {
 	const screamId = req.params.id;
 	const screamRef = db.doc(`/screams/${screamId}`);
 	const commentsRef = db.collection('comments').orderBy('createdAt', 'desc').where('screamId', '==', screamId);
-	const scream = {};
+	let scream = {};
 	try {
 		const screamDoc = await screamRef.get();
 		if (screamDoc.exists) {
-			scream.details = screamDoc.data();
+			scream = screamDoc.data();
+			scream.screamId = screamDoc.id;
+			scream.comments = [];
 			const commentsDoc = await commentsRef.get();
 			if (!commentsDoc.empty) {
-				scream.comments = [];
 				commentsDoc.forEach((comment) => scream.comments.push(comment.data()));
 			}
 			return res.status(200).json(scream);
@@ -42,8 +44,9 @@ const getOneScream = async (req, res) => {
 };
 
 const postOneScream = async (req, res) => {
-	console.log(req.body.text);
-	console.log(req.body);
+	if (isEmpty(req.body.text)) {
+		return res.status(400).json({scream: 'Scream cannot be empty'});
+	}
 	try {
 		const screamToPush = {
 			text: req.body.text,
