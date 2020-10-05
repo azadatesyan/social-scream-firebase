@@ -220,43 +220,25 @@ const getCurrentUserDetails = (req, res) => {
 };
 
 const getUserDetails = (req, res) => {
-	let userDetails = {};
-	db.doc(`/users/${req.params.id}`)
+	const queriedUsername = req.params.id;
+	const userDetails = {};
+	db.doc(`/users/${queriedUsername}`)
 		.get()
 		.then((doc) => {
 			if (doc.exists) {
 				console.log(doc.data());
 				userDetails.credentials = doc.data();
-				return db.collection('likes').where('username', '==', req.params.id).get();
+				return db.collection('screams').where('username', '==', queriedUsername).get();
 			}
 		})
 		.then((data) => {
-			userDetails.likes = [];
-			data.forEach((like) => {
-				userDetails.likes.push(like.data());
+			userDetails.screams = [];
+			data.forEach((scream) => {
+				screamToPush = scream.data();
+				screamToPush.screamId = scream.id;
+				userDetails.screams.push(screamToPush);
 			});
-			return db
-				.collection('notifications')
-				.where('recipient', '==', req.params.id)
-				.orderBy('createdAd', 'desc')
-				.limit(10)
-				.get();
-		})
-		.then((documents) => {
-			userDetails.notifications = [];
-			documents.forEach((document) => {
-				let { recipient, sender, read, screamId, type, createdAt } = document.data();
-				userDetails.notifications.push({
-					recipient,
-					sender,
-					read,
-					screamId,
-					type,
-					createdAt,
-					notificationId: document.id
-				});
-			});
-			return res.status(200).json(userDetails);
+			return res.status(200).json({userDetails});
 		})
 		.catch((err) => {
 			return res.status(500).json({ error: err.code });
